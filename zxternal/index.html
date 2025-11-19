@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External System - Face Registration Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(20px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #444;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 2px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border-left: 4px solid #667eea;
+        }
+
+        .iframe-container {
+            margin-top: 30px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .iframe-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .iframe-header h3 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .iframe-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .iframe-controls button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d7ff;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .test-cases {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .test-cases h3 {
+            margin-bottom: 15px;
+            color: #374151;
+        }
+
+        .test-case {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+
+        .test-case:hover {
+            background: #f3f4f6;
+            border-color: #667eea;
+        }
+
+        .registration-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+        }
+
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug-info h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .debug-log {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+
+        .debug-success {
+            color: #28a745;
+        }
+
+        .debug-error {
+            color: #dc3545;
+        }
+
+        .debug-info {
+            color: #17a2b8;
+        }
+
+        .debug-warning {
+            color: #ffc107;
+        }
+
+        .url-display {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #5a6268;
+        }
+
+        .persistent-message {
+            border: 2px solid #28a745 !important;
+            background: #d4f8e8 !important;
+            font-size: 16px;
+        }
+
+        .iframe-loading {
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>External System - Face Registration Test</h1>
+            <p>Test the face registration API integration with your Django backend</p>
+        </div>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label class="form-label">Your Django Backend URL</label>
+                <input type="text" id="backendUrl" class="form-input" 
+                       value="http://localhost:8000" 
+                       placeholder="http://localhost:8000">
+                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                    Make sure your Django server is running on this URL
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Employee ID</label>
+                <input type="text" id="employeeId" class="form-input" 
+                       placeholder="EMP001" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Employee Name</label>
+                <input type="text" id="employeeName" class="form-input" 
+                       placeholder="John Doe" required>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" onclick="registerEmployee()">
+                    <span>🚀</span> Register Employee & Get Face Registration URL
+                </button>
+                <button class="btn btn-secondary" onclick="clearForm()">
+                    <span>🔄</span> Clear Form
+                </button>
+                <button class="btn btn-secondary" onclick="testConnection()">
+                    <span>🔍</span> Test Connection
+                </button>
+            </div>
+        </div>
+
+        <!-- Debug Information -->
+        <div id="debugSection" class="debug-info hidden">
+            <h4>Debug Information</h4>
+            <div id="debugLogs"></div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultSection" class="result-section hidden">
+            <h3>✅ Registration Successful!</h3>
+            <div id="resultMessage"></div>
+            
+            <div class="url-display">
+                <strong>Face Registration URL:</strong><br>
+                <span id="registrationUrlDisplay">Loading...</span>
+                <button class="copy-btn" onclick="copyRegistrationUrl()">📋 Copy URL</button>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" onclick="openInNewWindow()">
+                    <span>🪟</span> Open in New Window
+                </button>
+                <button class="btn btn-secondary" onclick="showInIframe()">
+                    <span>📺</span> Show in Iframe
+                </button>
+                <button class="btn btn-secondary" onclick="testUrl()">
+                    <span>🔗</span> Test URL
+                </button>
+            </div>
+        </div>
+
+        <!-- Iframe Container -->
+        <div id="iframeContainer" class="iframe-container hidden">
+            <div class="iframe-header">
+                <h3>Face Registration Portal</h3>
+                <div class="iframe-controls">
+                    <button onclick="refreshIframe()">🔄 Refresh</button>
+                    <button onclick="openInNewWindow()">🪟 New Window</button>
+                    <button onclick="hideIframe()">❌ Close</button>
+                </div>
+            </div>
+            <div id="iframeLoading" class="iframe-loading hidden">
+                Loading face registration page...
+            </div>
+            <iframe id="registrationFrame" src="" title="Face Registration" 
+                    onload="onIframeLoad()" onerror="onIframeError()"></iframe>
+        </div>
+
+        <!-- Registration Status -->
+        <div id="registrationStatus" class="registration-status hidden">
+            <h4>Registration Status</h4>
+            <div id="statusMessage"></div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="test-cases">
+            <h3>🚀 Quick Test Cases</h3>
+            <div class="test-case" onclick="fillTestData('EMP001', 'Jack')">
+                <strong>EMP001</strong> - Jack
+            </div>
+            <div class="test-case" onclick="fillTestData('EMP002', 'Shamila')">
+                <strong>EMP002</strong> - Shamila
+            </div>
+            <div class="test-case" onclick="fillTestData('EMP003', 'Ajith')">
+                <strong>EMP003</strong> - Ajith
+            </div>
+            <div class="test-case" onclick="fillTestData('EMP004', 'Leyanta')">
+                <strong>EMP004</strong> - Leyanta
+            </div>
+            <div class="test-case" onclick="fillTestData('ADMIN001', 'Aadhu')">
+                <strong>ADMIN001</strong> - Aadhu
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="test-cases">
+            <h3>📋 How to Use</h3>
+            <ol style="padding-left: 20px; margin: 10px 0;">
+                <li>Enter your Django backend URL (default: http://localhost:8000)</li>
+                <li>Fill in Employee ID and Name</li>
+                <li>Click "Register Employee" to get the face registration URL</li>
+                <li>Use the URL to open the face registration page</li>
+                <li>Complete face scanning and registration</li>
+                <li>Check the registration status below</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let currentRedirectUrl = '';
+        let currentMapId = '';
+        let debugLogs = [];
+        let messageTimeout = null;
+        let iframeLoaded = false;
+
+        // Debug logging function
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                timestamp,
+                message,
+                type
+            };
+            debugLogs.push(logEntry);
+            
+            const debugLogsElement = document.getElementById('debugLogs');
+            if (debugLogsElement) {
+                const logElement = document.createElement('div');
+                logElement.className = `debug-log debug-${type}`;
+                logElement.innerHTML = `[${timestamp}] ${message}`;
+                debugLogsElement.appendChild(logElement);
+                debugLogsElement.scrollTop = debugLogsElement.scrollHeight;
+            }
+            
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Show debug section
+        function showDebugSection() {
+            document.getElementById('debugSection').classList.remove('hidden');
+        }
+
+        // Clear debug logs
+        function clearDebugLogs() {
+            debugLogs = [];
+            const debugLogsElement = document.getElementById('debugLogs');
+            if (debugLogsElement) {
+                debugLogsElement.innerHTML = '';
+            }
+        }
+
+        // Improved message listener with better filtering
+        window.addEventListener('message', function(event) {
+            // Only process messages that are specifically from our face registration flow
+            if (event.data && event.data.type === 'registration_completed') {
+                debugLog('📨 Received registration_completed message from iframe:', 'success');
+                debugLog(`Message data: ${JSON.stringify(event.data)}`, 'success');
+                
+                if (event.data.type === 'registration_completed') {
+                    showRegistrationStatus(
+                        `✅ Registration Completed Successfully!<br>
+                         <strong>Employee:</strong> ${event.data.employee_name} (${event.data.employee_id})<br>
+                         <strong>Map ID:</strong> ${event.data.map_id}<br>
+                         <strong>Time:</strong> ${new Date().toLocaleString()}`,
+                        'success'
+                    );
+                    
+                    debugLog('🎉 Face registration completed successfully!', 'success');
+                    
+                    // Don't auto-hide the iframe - let user close it manually
+                    showMessage('✅ Face registration completed! You can now close the iframe.', 'success');
+                }
+            } else if (event.data && typeof event.data === 'object') {
+                // Log other messages for debugging but don't act on them
+                debugLog(`📨 Received other message: ${JSON.stringify(event.data)}`, 'info');
+            }
+        });
+
+        // Iframe load handler
+        function onIframeLoad() {
+            debugLog('✅ Iframe loaded successfully', 'success');
+            document.getElementById('iframeLoading').classList.add('hidden');
+            iframeLoaded = true;
+            
+            // Show success message
+            showRegistrationStatus('✅ Face registration page loaded successfully. Please complete the registration process.', 'success');
+        }
+
+        // Iframe error handler
+        function onIframeError() {
+            debugLog('❌ Iframe failed to load', 'error');
+            document.getElementById('iframeLoading').classList.add('hidden');
+            showRegistrationStatus('❌ Failed to load face registration page. Please check the URL and try again.', 'error');
+        }
+
+        // Test connection to backend
+        async function testConnection() {
+            const backendUrl = document.getElementById('backendUrl').value.trim();
+            
+            if (!backendUrl) {
+                showMessage('Please enter a backend URL', 'error');
+                return;
+            }
+
+            debugLog('🔍 Testing connection to backend...', 'info');
+            showDebugSection();
+
+            try {
+                const response = await fetch(backendUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    debugLog('✅ Backend connection successful!', 'success');
+                    showMessage('✅ Backend connection successful!', 'success');
+                } else {
+                    debugLog(`❌ Backend returned status: ${response.status}`, 'error');
+                    showMessage(`❌ Backend error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                debugLog(`❌ Connection failed: ${error.message}`, 'error');
+                showMessage(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Register employee and get URL
+        async function registerEmployee() {
+            const backendUrl = document.getElementById('backendUrl').value.trim();
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const employeeName = document.getElementById('employeeName').value.trim();
+
+            if (!backendUrl || !employeeId || !employeeName) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            debugLog('🚀 Starting employee registration...', 'info');
+            showDebugSection();
+            clearDebugLogs();
+
+            try {
+                debugLog(`📤 Sending request to: ${backendUrl}/api/map-employee/`, 'info');
+                debugLog(`Request data: ${JSON.stringify({ employee_id: employeeId, employee_name: employeeName })}`, 'info');
+
+                const startTime = Date.now();
+                const response = await fetch(`${backendUrl}/api/map-employee/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        employee_id: employeeId,
+                        employee_name: employeeName
+                    })
+                });
+
+                const responseTime = Date.now() - startTime;
+                debugLog(`📥 Response received in ${responseTime}ms`, 'info');
+                debugLog(`Response status: ${response.status}`, 'info');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    debugLog(`❌ HTTP error! status: ${response.status}`, 'error');
+                    debugLog(`Error response: ${errorText}`, 'error');
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                debugLog(`📋 Response data: ${JSON.stringify(result)}`, 'info');
+
+                if (result.success) {
+                    currentRedirectUrl = result.redirect_url;
+                    currentMapId = result.map_id;
+                    
+                    debugLog('✅ Employee mapped successfully!', 'success');
+                    debugLog(`📝 Map ID: ${result.map_id}`, 'success');
+                    debugLog(`🔗 Redirect URL: ${result.redirect_url}`, 'success');
+                    debugLog(`🔗 Registration URL: ${result.registration_url}`, 'success');
+
+                    // Update UI with response data
+                    document.getElementById('resultSection').classList.remove('hidden');
+                    document.getElementById('registrationUrlDisplay').textContent = result.redirect_url;
+                    
+                    // Show persistent success message that won't auto-hide
+                    showPersistentMessage(
+                        `✅ Success! Employee mapped successfully!<br>
+                         <strong>Employee:</strong> ${employeeName} (${employeeId})<br>
+                         <strong>Map ID:</strong> ${result.map_id}<br>
+                         <strong>Registration URL generated and ready to use.</strong>`,
+                        'success'
+                    );
+                    
+                    // Show registration status area
+                    document.getElementById('registrationStatus').classList.remove('hidden');
+                    showRegistrationStatus('🔄 Ready for face registration. Click "Show in Iframe" or "Open in New Window" to start.', 'info');
+
+                } else {
+                    debugLog(`❌ API error: ${result.message}`, 'error');
+                    showMessage(`❌ Error: ${result.message}`, 'error');
+                }
+
+            } catch (error) {
+                debugLog(`❌ Registration failed: ${error.message}`, 'error');
+                showMessage(`❌ Registration failed: ${error.message}`, 'error');
+                
+                // Additional debugging info
+                if (error.message.includes('Failed to fetch')) {
+                    debugLog('💡 Tip: Check if CORS is enabled on your Django server', 'warning');
+                    debugLog('💡 Tip: Make sure your Django server is running', 'warning');
+                    debugLog('💡 Tip: Check browser console for CORS errors', 'warning');
+                }
+            }
+        }
+
+        // Show persistent message that doesn't auto-hide
+        function showPersistentMessage(message, type) {
+            const resultMessage = document.getElementById('resultMessage');
+            if (resultMessage) {
+                // Clear any existing timeout
+                if (messageTimeout) {
+                    clearTimeout(messageTimeout);
+                    messageTimeout = null;
+                }
+                
+                resultMessage.innerHTML = `<div class="message ${type} persistent-message">${message}</div>`;
+            }
+        }
+
+        // Show message (for temporary messages)
+        function showMessage(message, type) {
+            const resultMessage = document.getElementById('resultMessage');
+            if (resultMessage) {
+                // Clear any existing timeout
+                if (messageTimeout) {
+                    clearTimeout(messageTimeout);
+                }
+                
+                resultMessage.innerHTML = `<div class="message ${type}">${message}</div>`;
+                
+                // Only auto-hide success messages after 15 seconds
+                if (type === 'success') {
+                    messageTimeout = setTimeout(() => {
+                        if (resultMessage.innerHTML.includes(message)) {
+                            resultMessage.innerHTML = '';
+                        }
+                    }, 15000);
+                }
+            }
+        }
+
+        // Show registration status
+        function showRegistrationStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.innerHTML = `<div class="message ${type}">${message}</div>`;
+            }
+        }
+
+        // Test the generated URL
+        async function testUrl() {
+            if (!currentRedirectUrl) {
+                showMessage('No URL to test', 'error');
+                return;
+            }
+
+            debugLog(`🔗 Testing URL: ${currentRedirectUrl}`, 'info');
+
+            try {
+                const response = await fetch(currentRedirectUrl, { method: 'HEAD' });
+                if (response.ok) {
+                    debugLog('✅ URL is accessible!', 'success');
+                    showMessage('✅ URL is accessible and ready to use!', 'success');
+                } else {
+                    debugLog(`❌ URL returned status: ${response.status}`, 'error');
+                    showMessage(`❌ URL error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                debugLog(`❌ URL test failed: ${error.message}`, 'error');
+                showMessage(`❌ URL test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Open in new window
+        function openInNewWindow() {
+            if (currentRedirectUrl) {
+                debugLog(`🪟 Opening URL in new window: ${currentRedirectUrl}`, 'info');
+                window.open(currentRedirectUrl, 'faceRegistration', 
+                    'width=1200,height=800,scrollbars=yes,resizable=yes,location=yes');
+                    
+                showRegistrationStatus('✅ Face registration opened in new window. Please complete the registration process there.', 'success');
+            } else {
+                showMessage('No URL available', 'error');
+            }
+        }
+
+        // Show in iframe
+        function showInIframe() {
+            if (currentRedirectUrl) {
+                const iframeContainer = document.getElementById('iframeContainer');
+                const iframe = document.getElementById('registrationFrame');
+                const iframeLoading = document.getElementById('iframeLoading');
+                
+                debugLog(`📺 Loading URL in iframe: ${currentRedirectUrl}`, 'info');
+                
+                // Show loading indicator
+                iframeLoading.classList.remove('hidden');
+                iframeContainer.classList.remove('hidden');
+                
+                // Set iframe source
+                iframe.src = currentRedirectUrl;
+                iframeLoaded = false;
+                
+                // Show registration status area
+                document.getElementById('registrationStatus').classList.remove('hidden');
+                showRegistrationStatus('🔄 Loading face registration page...', 'info');
+                
+                // Scroll to iframe
+                iframeContainer.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                showMessage('No URL available', 'error');
+            }
+        }
+
+        // Refresh iframe
+        function refreshIframe() {
+            const iframe = document.getElementById('registrationFrame');
+            const iframeLoading = document.getElementById('iframeLoading');
+            
+            debugLog('🔄 Refreshing iframe...', 'info');
+            iframeLoading.classList.remove('hidden');
+            iframe.src = iframe.src;
+            iframeLoaded = false;
+        }
+
+        // Hide iframe
+        function hideIframe() {
+            document.getElementById('iframeContainer').classList.add('hidden');
+            debugLog('📺 Iframe hidden', 'info');
+            showRegistrationStatus('Iframe closed. You can reopen it using "Show in Iframe".', 'info');
+        }
+
+        // Copy registration URL to clipboard
+        function copyRegistrationUrl() {
+            if (currentRedirectUrl) {
+                navigator.clipboard.writeText(currentRedirectUrl).then(() => {
+                    debugLog('📋 URL copied to clipboard!', 'success');
+                    showMessage('✅ URL copied to clipboard!', 'success');
+                }).catch(err => {
+                    debugLog(`❌ Failed to copy URL: ${err}`, 'error');
+                    showMessage('❌ Failed to copy URL', 'error');
+                });
+            }
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('employeeId').value = '';
+            document.getElementById('employeeName').value = '';
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('iframeContainer').classList.add('hidden');
+            document.getElementById('registrationStatus').classList.add('hidden');
+            document.getElementById('debugSection').classList.add('hidden');
+            document.getElementById('resultMessage').innerHTML = '';
+            document.getElementById('statusMessage').innerHTML = '';
+            currentRedirectUrl = '';
+            currentMapId = '';
+            iframeLoaded = false;
+            
+            // Clear any pending timeouts
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+                messageTimeout = null;
+            }
+            
+            clearDebugLogs();
+            debugLog('🧹 Form cleared', 'info');
+        }
+
+        // Fill test data
+        function fillTestData(empId, empName) {
+            document.getElementById('employeeId').value = empId;
+            document.getElementById('employeeName').value = empName;
+            debugLog(`📝 Filled test data: ${empName} (${empId})`, 'info');
+        }
+
+        // Auto-fill with sample data for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            const randomId = 'EMP' + Math.floor(1000 + Math.random() * 9000);
+            const randomName = 'Test User ' + Math.floor(Math.random() * 100);
+            fillTestData(randomId, randomName);
+            debugLog('🔄 Test page loaded successfully', 'success');
+            debugLog('💡 Use the test cases or enter your own data', 'info');
+        });
+
+        // Add keyboard shortcut
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                registerEmployee();
+            }
+        });
+    </script>
+</body>
+</html>

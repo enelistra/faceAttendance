@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance - Smart Attendance System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #f5576c;
+            --primary-dark: #f093fb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--gray-800);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            min-height: 700px;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 700px;
+        }
+
+        @media (max-width: 968px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Panel - Camera Section */
+        .camera-panel {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            position: relative;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .camera-frame {
+            position: relative;
+            width: 100%;
+            height: 375px;
+            border-radius: 16px;
+            background: var(--gray-800);
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+            transform: scaleX(-1);
+        }
+
+        .face-overlay {
+            position: absolute;
+            border: 3px solid var(--success);
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            pointer-events: none;
+            z-index: 10;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+            box-sizing: border-box;
+        }
+
+        .face-overlay.warning {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+        }
+
+        .scanning-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%),
+                linear-gradient(transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            pointer-events: none;
+            border-radius: 16px;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            width: 100%;
+            max-width: 500px;
+            flex-direction: column;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Mark Attendance Button */
+        .btn-mark-attendance {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-mark-attendance:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-mark-attendance:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Right Panel - Status Section */
+        .status-panel {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .panel-header {
+            margin-bottom: 32px;
+        }
+
+        .panel-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .panel-header p {
+            color: var(--gray-600);
+            font-size: 16px;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .status-card {
+            padding: 20px;
+            border-radius: 16px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .status-icon.scanning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-icon.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .status-content h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 4px;
+        }
+
+        .status-content p {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        /* Attendance Results */
+        .attendance-result {
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid var(--success);
+        }
+
+        .result-header {
+            color: var(--success);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .result-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .result-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.9em;
+        }
+
+        .result-value {
+            color: var(--gray-800);
+            font-size: 1.1em;
+            margin-top: 5px;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+            margin-top: 32px;
+        }
+
+        .instructions h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            padding: 6px 0;
+            color: var(--gray-600);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions li:before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Navigation */
+        .navigation {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .nav-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Message Styles */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none !important;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .action-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Auto-scan indicator */
+        .auto-scan-indicator {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .auto-scan-indicator .pulse {
+            display: inline-block;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <div class="app-container">
+            <!-- Left Panel - Camera -->
+            <div class="camera-panel">
+                <div class="camera-container">
+                    <div class="camera-frame">
+                        <video id="video" autoplay playsinline></video>
+                        <div class="scanning-grid"></div>
+                        <div id="faceOverlay" class="face-overlay"></div>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <div style="display: flex; gap: 12px; width: 100%;">
+                            <button id="startCamera" class="btn btn-primary hidden" onclick="startCamera()">
+                                <span>📷</span> Start Camera
+                            </button>
+                            <button id="stopCamera" class="btn btn-secondary" onclick="stopCamera()">
+                                <span>⏹️</span> Stop Camera
+                            </button>
+                        </div>
+                        
+                        <!-- Auto Scan Indicator -->
+                        <div class="auto-scan-indicator">
+                            <div class="pulse">🔍</div>
+                            <span>Auto-scanning enabled</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Status & Results -->
+            <div class="status-panel">
+                <div class="panel-header">
+                    <h1>Mark Attendance</h1>
+                    <p>Face recognition will automatically scan and mark your attendance</p>
+                </div>
+
+                <!-- Message Display -->
+                <div id="message"></div>
+
+                <!-- Status Grid -->
+                <div class="status-grid">
+                    <div id="cameraStatus" class="status-card">
+                        <div class="status-icon scanning pulse">
+                            <span>📷</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Camera Status</h3>
+                            <p>Initializing camera...</p>
+                        </div>
+                    </div>
+
+                    <div id="faceStatus" class="status-card">
+                        <div class="status-icon scanning pulse">
+                            <span>🔍</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Face Detection</h3>
+                            <p>Waiting for camera...</p>
+                        </div>
+                    </div>
+
+                    <div id="spoofingStatus" class="status-card">
+                        <div class="status-icon">
+                            <span>🤖</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Spoofing Check</h3>
+                            <p>Waiting for verification</p>
+                        </div>
+                    </div>
+
+                    <div id="matchingStatus" class="status-card">
+                        <div class="status-icon">
+                            <span>👤</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Face Matching</h3>
+                            <p>Waiting for recognition</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Results -->
+                <div id="attendanceResult"></div>
+
+                <!-- Instructions -->
+                <div class="instructions">
+                    <h3><span>💡</span> Automated Attendance Process</h3>
+                    <ul>
+                        <li><strong>Step 1:</strong> Camera starts automatically</li>
+                        <li><strong>Step 2:</strong> System continuously scans for faces</li>
+                        <li><strong>Step 3:</strong> Face is automatically detected and verified</li>
+                        <li><strong>Step 4:</strong> Anti-spoofing check performed</li>
+                        <li><strong>Step 5:</strong> Attendance is automatically marked</li>
+                        <li><strong>Step 6:</strong> Results displayed automatically</li>
+                    </ul>
+                </div>
+
+                <!-- Navigation -->
+                <div class="navigation">
+                    <a href="{% url 'face_register' %}" class="nav-link">
+                        <span>👤</span> Go to Face Registration
+                    </a>
+                    <a href="/admin/" class="nav-link">
+                        <span>⚙️</span> Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        let stream = null;
+        let scannedFaceData = null;
+        let isScanning = false;
+        let scanInterval = null;
+        let scanAttempts = 0;
+        const MAX_SCAN_ATTEMPTS = 50; // Prevent infinite scanning
+
+        // DOM Elements
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const faceOverlay = document.getElementById('faceOverlay');
+        const cameraStatus = document.getElementById('cameraStatus');
+        const faceStatus = document.getElementById('faceStatus');
+        const spoofingStatus = document.getElementById('spoofingStatus');
+        const matchingStatus = document.getElementById('matchingStatus');
+        const attendanceSection = document.getElementById('attendanceSection');
+        const scanSection = document.getElementById('scanSection');
+        const scanBtn = document.getElementById('scanFaceBtn');
+        const messageDiv = document.getElementById('message');
+        const attendanceResult = document.getElementById('attendanceResult');
+        const startBtn = document.getElementById('startCamera');
+        const stopBtn = document.getElementById('stopCamera');
+        
+        // Your .NET application URL
+        const DOT_NET_URL = 'https://localhost:7072';
+
+        // ================================
+        // AUTOMATED SCANNING FUNCTIONS
+        // ================================
+
+        // Start automated scanning
+        function startAutoScanning() {
+            console.log("🔄 Starting automated face scanning...");
+            
+            if (scanInterval) {
+                clearInterval(scanInterval);
+            }
+            
+            scanAttempts = 0;
+            isScanning = true;
+            
+            // Scan every 3 seconds
+            scanInterval = setInterval(async () => {
+                if (!isScanning) return;
+                
+                scanAttempts++;
+                if (scanAttempts > MAX_SCAN_ATTEMPTS) {
+                    console.log("🛑 Max scan attempts reached, stopping auto-scan");
+                    stopAutoScanning();
+                    showError("Maximum scan attempts reached. Please refresh the page.");
+                    return;
+                }
+                
+                console.log(`🔍 Auto-scan attempt ${scanAttempts}`);
+                await scanFaceForAttendance();
+            }, 3000); // Scan every 3 seconds
+        }
+
+        // Stop automated scanning
+        function stopAutoScanning() {
+            console.log("🛑 Stopping automated scanning");
+            isScanning = false;
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+        }
+
+        // Modified scan function for automated use
+        async function scanFaceForAttendance() {
+            if (!stream || isScanning === false) {
+                return;
+            }
+            
+            try {
+                updateFaceStatus('Scanning for face...', 'scanning');
+                
+                const context = canvas.getContext('2d');
+                
+                // Set canvas size to match video
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Draw current frame to canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Send frame for face detection and attendance
+                const response = await fetch('/api/mark-attendance/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        type: 'verify_attendance',
+                        image_data: imageData
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('🎯 Attendance API response:', result);
+                
+                if (result.success) {
+                    updateFaceStatus('✅ Face detected', 'success');
+                    
+                    // Send face detection update to .NET parent
+                    sendFaceDetectionUpdate({
+                        detected: true,
+                        message: 'Face detected successfully',
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    if (result.face_location) {
+                        updateFaceOverlay(result.face_location, 'success');
+                    }
+                    
+                    if (result.employee_name) {
+                        // Attendance marked successfully
+                        updateSpoofingStatus('✅ No spoofing detected', 'success');
+                        updateMatchingStatus('✅ Face matched', 'success');
+                        showAttendanceSuccess(result);
+                        showMessage('🎉 ' + result.message, 'success');
+                        
+                        // ✅ CRITICAL: Send attendance result to .NET parent window
+                        sendToParentDotNet({
+                            success: true,
+                            employee_id: result.employee_id,
+                            employee_name: result.employee_name,
+                            timestamp: result.timestamp || new Date().toLocaleString(),
+                            similarity: result.similarity,
+                            message: result.message,
+                            confidence: result.similarity ? (result.similarity * 100).toFixed(1) + '%' : '100%',
+                            source: 'python_attendance_system',
+                            status: 'marked'
+                        });
+                        
+                        // Stop auto scanning after successful attendance
+                        stopAutoScanning();
+                        
+                        // Stop camera after successful attendance (optional)
+                        setTimeout(() => {
+                            stopCamera();
+                            // Send completion status
+                            sendScanningStatus({ 
+                                status: 'completed', 
+                                message: 'Attendance marked successfully',
+                                success: true,
+                                timestamp: new Date().toISOString()
+                            });
+                        }, 5000);
+                    } else {
+                        // Face detected but no match
+                        updateFaceStatus('🔍 Face detected - No match', 'warning');
+                        sendToParentDotNet({
+                            success: false,
+                            message: result.message || 'No matching employee found',
+                            timestamp: new Date().toISOString(),
+                            source: 'python_attendance_system',
+                            status: 'no_match'
+                        });
+                    }
+                } else {
+                    // Face detection failed
+                    updateFaceStatus('🔍 No face detected', 'warning');
+                }
+                
+            } catch (error) {
+                console.error('❌ Auto-scan error:', error);
+                updateFaceStatus('❌ Scanning error', 'error');
+                
+                // Send error to .NET parent
+                sendToParentDotNet({
+                    success: false,
+                    message: 'Scanning error: ' + error.message,
+                    timestamp: new Date().toISOString(),
+                    source: 'python_attendance_system',
+                    error: error.toString(),
+                    status: 'scan_error'
+                });
+            }
+        }
+
+        // ================================
+        // COMMUNICATION FUNCTIONS WITH .NET
+        // ================================
+
+        function sendToParentDotNet(result) {
+            console.log('📨 Sending to parent .NET:', result);
+            
+            if (window.parent && window.parent !== window) {
+                try {
+                    const targets = [
+                        'https://localhost:7072',
+                        'http://localhost:7072', 
+                        window.location.origin,
+                        '*'
+                    ];
+                    
+                    for (let target of targets) {
+                        try {
+                            window.parent.postMessage({
+                                type: 'ATTENDANCE_RESULT',
+                                data: result
+                            }, target);
+                            console.log(`✅ Message sent to target: ${target}`);
+                            break;
+                        } catch (e) {
+                            console.log(`❌ Failed to send to ${target}:`, e);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error sending message to .NET:', error);
+                }
+            } else {
+                console.log('ℹ️ No parent window found (running in standalone mode)');
+            }
+        }
+
+        function onAttendanceSuccess(result) {
+            console.log('🎉 Attendance successful, sending to .NET:', result);
+            
+            sendToParentDotNet({
+                success: true,
+                employee_id: result.employee_id,
+                employee_name: result.employee_name,
+                timestamp: result.timestamp || new Date().toLocaleString(),
+                similarity: result.similarity,
+                message: result.message,
+                confidence: result.similarity ? (result.similarity * 100).toFixed(1) + '%' : '100%',
+                source: 'python_attendance_system',
+                status: 'marked'
+            });
+        }
+        
+        function sendFaceDetectionUpdate(faceData) {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'FACE_DETECTION_UPDATE',
+                    data: faceData
+                }, DOT_NET_URL);
+            }
+        }
+
+        function sendScanningStatus(status) {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'SCANNING_STATUS',
+                    data: status
+                }, DOT_NET_URL);
+            }
+        }
+
+        function sendIframeReady() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'IFRAME_READY',
+                    data: { 
+                        loaded: true,
+                        url: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        source: 'python_attendance_system',
+                        auto_scan: true
+                    }
+                }, DOT_NET_URL);
+            }
+        }
+
+        // Listen for messages from parent .NET app
+        window.addEventListener('message', function(event) {
+            if (event.origin !== DOT_NET_URL) {
+                console.log('Message from unauthorized origin:', event.origin);
+                return;
+            }
+            
+            console.log('📩 Received message from .NET parent:', event.data);
+            
+            if (event.data.type === 'REQUEST_STATUS') {
+                const currentStatus = {
+                    cameraActive: stream !== null,
+                    autoScanning: isScanning,
+                    timestamp: new Date().toISOString(),
+                    source: 'python_attendance_system'
+                };
+                sendToParentDotNet(currentStatus);
+            }
+            
+            if (event.data.type === 'PING') {
+                sendToParentDotNet({
+                    type: 'PONG',
+                    timestamp: new Date().toISOString(),
+                    source: 'python_attendance_system'
+                });
+            }
+        });
+
+        // ================================
+        // UPDATED CAMERA FUNCTIONS
+        // ================================
+
+        // Start camera automatically
+        async function startCamera() {
+            console.log("📷 Starting camera for automated attendance...");
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
+                video.srcObject = stream;
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                
+                updateCameraStatus('✅ Camera active - Auto-scanning', 'success');
+                updateFaceStatus('Ready - Auto-scanning enabled', 'scanning');
+                showMessage('✅ Camera started! Auto-scanning for faces...', 'success');
+                
+                // Send camera started status to .NET
+                sendScanningStatus({ 
+                    status: 'camera_started', 
+                    message: 'Camera activated with auto-scan',
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Start automated scanning after camera is ready
+                setTimeout(() => {
+                    startAutoScanning();
+                }, 1000);
+                
+            } catch (err) {
+                showError('Camera error: ' + err.message);
+                sendToParentDotNet({
+                    success: false,
+                    message: 'Camera error: ' + err.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        // Stop camera
+        function stopCamera() {
+            console.log("⏹️ Stopping camera and auto-scanning...");
+            
+            stopAutoScanning();
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            startBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+            faceOverlay.style.display = 'none';
+            
+            updateCameraStatus('📷 Camera stopped', 'stopped');
+            updateFaceStatus('Auto-scanning stopped', 'default');
+            updateSpoofingStatus('Waiting for verification', 'default');
+            updateMatchingStatus('Waiting for recognition', 'default');
+            scannedFaceData = null;
+            
+            sendScanningStatus({ 
+                status: 'camera_stopped', 
+                message: 'Camera and auto-scan stopped',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // ================================
+        // UTILITY FUNCTIONS
+        // ================================
+
+        function updateFaceOverlay(faceLocation, type) {
+            const [x, y, w, h] = faceLocation;
+            
+            const videoRect = video.getBoundingClientRect();
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            
+            const scaleX = videoRect.width / videoWidth;
+            const scaleY = videoRect.height / videoHeight;
+            
+            faceOverlay.style.display = 'block';
+            faceOverlay.style.left = (x * scaleX) + 'px';
+            faceOverlay.style.top = (y * scaleY) + 'px';
+            faceOverlay.style.width = (w * scaleX) + 'px';
+            faceOverlay.style.height = (h * scaleY) + 'px';
+            
+            if (type === 'success') {
+                faceOverlay.style.borderColor = '#10b981';
+                faceOverlay.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                faceOverlay.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.3)';
+                faceOverlay.classList.remove('warning');
+            } else {
+                faceOverlay.style.borderColor = '#f59e0b';
+                faceOverlay.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+                faceOverlay.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.3)';
+                faceOverlay.classList.add('warning');
+            }
+        }
+
+        function showAttendanceSuccess(result) {
+            const similarityPercent = result.similarity ? (result.similarity * 100).toFixed(1) : '100';
+            
+            attendanceResult.innerHTML = `
+                <div class="attendance-result fade-in">
+                    <div class="result-header">✅ Attendance Marked Successfully!</div>
+                    <div class="result-details">
+                        <div class="result-item">
+                            <div class="result-label">Employee Name</div>
+                            <div class="result-value">${result.employee_name}</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Employee ID</div>
+                            <div class="result-value">${result.employee_id}</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Time</div>
+                            <div class="result-value">${result.timestamp}</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Recognition Confidence</div>
+                            <div class="result-value">${similarityPercent}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCameraStatus(message, type) {
+            updateStatusCard(cameraStatus, message, type, 'Camera Status');
+        }
+
+        function updateFaceStatus(message, type) {
+            updateStatusCard(faceStatus, message, type, 'Face Detection');
+        }
+
+        function updateSpoofingStatus(message, type) {
+            updateStatusCard(spoofingStatus, message, type, 'Spoofing Check');
+        }
+
+        function updateMatchingStatus(message, type) {
+            updateStatusCard(matchingStatus, message, type, 'Face Matching');
+        }
+
+        function updateStatusCard(card, message, type, title) {
+            const icon = card.querySelector('.status-icon');
+            const titleEl = card.querySelector('h3');
+            const messageEl = card.querySelector('p');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            icon.className = 'status-icon';
+            if (type === 'scanning') {
+                icon.classList.add('scanning', 'pulse');
+                icon.innerHTML = '<span>🔍</span>';
+            } else if (type === 'success') {
+                icon.classList.add('success');
+                icon.innerHTML = '<span>✅</span>';
+            } else if (type === 'error') {
+                icon.classList.add('error');
+                icon.innerHTML = '<span>❌</span>';
+            } else if (type === 'warning') {
+                icon.classList.add('scanning');
+                icon.innerHTML = '<span>⚠️</span>';
+            } else if (type === 'stopped') {
+                icon.innerHTML = '<span>📷</span>';
+            } else {
+                icon.innerHTML = '<span>👤</span>';
+            }
+        }
+
+        function showMessage(message, type) {
+            messageDiv.innerHTML = `<div class="message ${type === 'success' ? 'success-message' : 'error-message'} fade-in">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (messageDiv.innerHTML.includes(message)) {
+                        messageDiv.innerHTML = '';
+                    }
+                }, 5000);
+            }
+        }
+
+        function showError(message) {
+            showMessage('❌ Error: ' + message, 'error');
+        }
+
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfToken ? csrfToken.value : '';
+        }
+
+        // ================================
+        // INITIALIZATION
+        // ================================
+
+        // Stop camera when leaving page
+        window.addEventListener('beforeunload', stopCamera);
+
+        // Initialize automatically when page loads
+        window.addEventListener('load', function() {
+            console.log('🎬 Mark Attendance Page Loaded - Starting Auto Process');
+            
+            // Start camera automatically
+            setTimeout(() => {
+                startCamera();
+            }, 1000);
+            
+            // Notify parent that iframe is ready
+            setTimeout(() => {
+                sendIframeReady();
+            }, 1500);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Registration - Smart Attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--gray-800);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            min-height: 700px;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 700px;
+        }
+
+        @media (max-width: 968px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Panel - Camera Section */
+        .camera-panel {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            position: relative;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .camera-frame {
+            position: relative;
+            width: 100%;
+            height: 375px;
+            border-radius: 16px;
+            background: var(--gray-800);
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+            transform: scaleX(-1);
+        }
+
+        .face-overlay {
+            position: absolute;
+            border: 3px solid var(--success);
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            pointer-events: none;
+            z-index: 10;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+            box-sizing: border-box;
+        }
+
+        .face-overlay.warning {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+        }
+
+        .scanning-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%),
+                linear-gradient(transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            pointer-events: none;
+            border-radius: 16px;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            width: 100%;
+            max-width: 500px;
+            flex-direction: column;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Action Buttons */
+        .btn-scan {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-scan:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-scan:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-verify {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-verify:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-verify:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Right Panel - Form Section */
+        .form-panel {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .panel-header {
+            margin-bottom: 32px;
+        }
+
+        .panel-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .panel-header p {
+            color: var(--gray-600);
+            font-size: 16px;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .status-card {
+            padding: 20px;
+            border-radius: 16px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .status-icon.scanning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-icon.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .status-content h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 4px;
+        }
+
+        .status-content p {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-mark-attendance {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 2px solid var(--gray-200);
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-mark-attendance:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        /* Instructions */
+        .instructions {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+            margin-top: 32px;
+        }
+
+        .instructions h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            padding: 6px 0;
+            color: var(--gray-600);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions li:before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Message Styles */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none !important;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .action-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .nav-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* External ID Info */
+        .external-info {
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .external-info h4 {
+            color: #0369a1;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <div class="app-container">
+            <!-- Left Panel - Camera -->
+            <div class="camera-panel">
+                <div class="camera-container">
+                    <div class="camera-frame">
+                        <video id="video" autoplay playsinline></video>
+                        <div class="scanning-grid"></div>
+                        <div id="faceOverlay" class="face-overlay"></div>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <div style="display: flex; gap: 12px; width: 100%;">
+                            <button id="startCamera" class="btn btn-primary" onclick="startCamera()">
+                                <span>📷</span> Start Camera
+                            </button>
+                            <button id="stopCamera" class="btn btn-secondary hidden" onclick="stopCamera()">
+                                <span>⏹️</span> Stop Camera
+                            </button>
+                        </div>
+                        
+                        <!-- Scan Face Button -->
+                        <div id="scanSection" class="action-section hidden">
+                            <button id="scanFaceBtn" class="btn-scan" onclick="scanFaceOnce()">
+                                <span>🔍</span> Scan Face Once
+                            </button>
+                        </div>
+
+                        <!-- Verify Button -->
+                        <div id="verifySection" class="action-section hidden">
+                            <button id="verifyFaceBtn" class="btn-verify" onclick="verifyFaceWithGemini()">
+                                <span>🤖</span> Verify with Gemini
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Form & Status -->
+            <div class="form-panel">
+                <div class="panel-header">
+                    <h1>Face Registration</h1>
+                    <p>Register your face for the smart attendance system</p>
+                </div>
+
+                <!-- External ID Information -->
+                <div id="externalInfo" class="external-info hidden">
+                    <h4><span>🔗</span> External Registration</h4>
+                    <p><strong>Map ID:</strong> <span id="currentMapId">-</span></p>
+                    <p><strong>Employee:</strong> <span id="currentEmployeeInfo">-</span></p>
+                </div>
+
+                <!-- Message Display -->
+                <div id="message"></div>
+
+                <!-- Status Grid -->
+                <div class="status-grid">
+                    <div id="cameraStatus" class="status-card">
+                        <div class="status-icon">
+                            <span>📷</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Camera Status</h3>
+                            <p>Click "Start Camera" to begin</p>
+                        </div>
+                    </div>
+
+                    <div id="faceStatus" class="status-card">
+                        <div class="status-icon">
+                            <span>🔍</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Face Detection</h3>
+                            <p>Waiting for scan</p>
+                        </div>
+                    </div>
+
+                    <div id="spoofingStatus" class="status-card">
+                        <div class="status-icon">
+                            <span>🤖</span>
+                        </div>
+                        <div class="status-content">
+                            <h3>Spoofing Check</h3>
+                            <p>Waiting for verification</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Form -->
+                <div id="employeeForm" class="hidden">
+                    <form id="registrationForm">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="employee_id" class="form-label">Employee ID</label>
+                            <input type="text" id="employee_id" name="employee_id" class="form-input" 
+                                   value="{% if mapped_data %}{{ mapped_data.employee_id }}{% endif %}" 
+                                   {% if mapped_data %}readonly{% endif %}
+                                   placeholder="Enter your employee ID" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employee_name" class="form-label">Full Name</label>
+                            <input type="text" id="employee_name" name="employee_name" class="form-input" 
+                                   value="{% if mapped_data %}{{ mapped_data.employee_name }}{% endif %}"
+                                   {% if mapped_data %}readonly{% endif %}
+                                   placeholder="Enter your full name" required>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit">
+                                <span>✅</span> Complete Registration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Instructions -->
+                <div class="instructions">
+                    <h3><span>💡</span> Registration Steps</h3>
+                    <ul>
+                        <li><strong>Step 1:</strong> Click "Start Camera" to activate camera</li>
+                        <li><strong>Step 2:</strong> Click "Scan Face Once" to capture facial patterns</li>
+                        <li><strong>Step 3:</strong> Click "Verify with Gemini" for spoofing check</li>
+                        <li><strong>Step 4:</strong> Fill in your details after successful verification</li>
+                        <li><strong>Step 5:</strong> Complete registration to save facial patterns</li>
+                    </ul>
+                </div>
+
+                <!-- Navigation -->
+                <div class="navigation">
+                    <a href="{% url 'mark_attendance' %}" class="nav-link">
+                        <span>🕐</span> Go to Mark Attendance
+                    </a>
+                    <a href="/admin/" class="nav-link">
+                        <span>⚙️</span> Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        let stream = null;
+        let scannedFaceData = null;
+        let currentMapId = null;
+
+        // DOM Elements
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const faceOverlay = document.getElementById('faceOverlay');
+        const cameraStatus = document.getElementById('cameraStatus');
+        const faceStatus = document.getElementById('faceStatus');
+        const spoofingStatus = document.getElementById('spoofingStatus');
+        const employeeForm = document.getElementById('employeeForm');
+        const startBtn = document.getElementById('startCamera');
+        const stopBtn = document.getElementById('stopCamera');
+        const scanSection = document.getElementById('scanSection');
+        const verifySection = document.getElementById('verifySection');
+        const scanBtn = document.getElementById('scanFaceBtn');
+        const verifyBtn = document.getElementById('verifyFaceBtn');
+        const messageDiv = document.getElementById('message');
+        const externalInfo = document.getElementById('externalInfo');
+        const currentMapIdSpan = document.getElementById('currentMapId');
+        const currentEmployeeInfoSpan = document.getElementById('currentEmployeeInfo');
+
+        // Initialize - Check for URL parameters
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Face Registration Page Loaded');
+            
+            // Get map_id from URL if present
+            const urlParams = new URLSearchParams(window.location.search);
+            currentMapId = urlParams.get('id');
+            
+            console.log(`🔍 URL Parameters:`, {
+                currentMapId: currentMapId,
+                fullURL: window.location.href,
+                hasMappedData: document.getElementById('employee_id').value ? 'Yes' : 'No'
+            });
+            
+            if (currentMapId) {
+                console.log(`📍 External registration detected. Map ID: ${currentMapId}`);
+                showExternalInfo();
+                
+                // Check if form is pre-filled by Django template
+                const employeeId = document.getElementById('employee_id').value;
+                const employeeName = document.getElementById('employee_name').value;
+                
+                if (employeeId && employeeName) {
+                    console.log(`✅ Employee details auto-filled: ${employeeName} (${employeeId})`);
+                    showMessage('✅ Employee details loaded automatically from external system.', 'success');
+                    
+                    // Auto-start camera for external registrations
+                    setTimeout(() => {
+                        console.log('🔧 Auto-starting camera for external registration...');
+                        startCamera();
+                    }, 1000);
+                } else {
+                    console.log('❌ No employee data found in form fields');
+                    showError('No employee data found. Please check the mapping.');
+                }
+            } else {
+                console.log('📍 Manual registration mode');
+            }
+        });
+
+        function showExternalInfo() {
+            if (currentMapId) {
+                console.log(`🔄 Showing external info for Map ID: ${currentMapId}`);
+                externalInfo.classList.remove('hidden');
+                currentMapIdSpan.textContent = currentMapId;
+                
+                // Get employee info from form fields (populated by Django)
+                const employeeId = document.getElementById('employee_id').value;
+                const employeeName = document.getElementById('employee_name').value;
+                
+                console.log(`📝 Form fields - ID: "${employeeId}", Name: "${employeeName}"`);
+                
+                if (employeeId && employeeName) {
+                    currentEmployeeInfoSpan.textContent = `${employeeName} (${employeeId})`;
+                    console.log(`✅ External info displayed: ${employeeName} (${employeeId})`);
+                } else {
+                    currentEmployeeInfoSpan.textContent = 'No data found';
+                    console.log('❌ No employee data found in form fields');
+                    showError('Employee data not found. Please check the external mapping.');
+                }
+            }
+        }
+
+        // Start camera
+        async function startCamera() {
+            console.log("📷 Starting camera...");
+            
+            try {
+                // Start camera
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
+                video.srcObject = stream;
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                scanSection.classList.remove('hidden');
+                
+                updateCameraStatus('✅ Camera active', 'success');
+                updateFaceStatus('Ready to scan face', 'default');
+                
+                if (currentMapId) {
+                    showMessage('✅ Camera started! Please scan your face to complete external registration.', 'success');
+                } else {
+                    showMessage('✅ Camera started successfully! Click "Scan Face Once" to capture your face.', 'success');
+                }
+                
+            } catch (err) {
+                showError('Camera error: ' + err.message);
+            }
+        }
+
+        // Stop camera
+        function stopCamera() {
+            console.log("⏹️ Stopping camera...");
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            startBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+            scanSection.classList.add('hidden');
+            verifySection.classList.add('hidden');
+            employeeForm.classList.add('hidden');
+            faceOverlay.style.display = 'none';
+            
+            updateCameraStatus('📷 Camera stopped', 'stopped');
+            updateFaceStatus('Waiting for scan', 'default');
+            updateSpoofingStatus('Waiting for verification', 'default');
+            scannedFaceData = null;
+        }
+
+        // Scan face once (single scan)
+        async function scanFaceOnce() {
+            console.log("🔍 Scanning face once...");
+            
+            if (!stream) {
+                showError('Please start camera first');
+                return;
+            }
+            
+            try {
+                scanBtn.disabled = true;
+                scanBtn.innerHTML = '<span>🔄</span> Scanning...';
+                updateFaceStatus('Scanning face...', 'scanning');
+
+                const context = canvas.getContext('2d');
+                
+                // Set canvas size to match video
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Draw current frame to canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Send frame for face detection
+                const response = await fetch('/api/face-register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        type: 'scan_frame',
+                        image_data: imageData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.face_detected) {
+                    if (result.quality_issue) {
+                        updateFaceStatus('⚠️ ' + result.message, 'warning');
+                        updateFaceOverlay(result.face_location, 'warning');
+                        showError('Face quality issue: ' + result.message);
+                    } else {
+                        updateFaceStatus('✅ ' + result.message, 'success');
+                        updateFaceOverlay(result.face_location, 'success');
+                        
+                        // Store scanned face data
+                        scannedFaceData = {
+                            facial_patterns: result.facial_patterns,
+                            face_location: result.face_location,
+                            image_data: imageData
+                        };
+                        
+                        // Show verify button
+                        verifySection.classList.remove('hidden');
+                        updateSpoofingStatus('Ready for verification', 'scanning');
+                        
+                        if (currentMapId) {
+                            showMessage('✅ Face scanned successfully! Click "Verify with Gemini" to complete external registration.', 'success');
+                        } else {
+                            showMessage('✅ Face scanned successfully! Click "Verify with Gemini" to check for spoofing.', 'success');
+                        }
+                    }
+                } else {
+                    updateFaceStatus('❌ ' + result.message, 'error');
+                    showError(result.message);
+                }
+                
+            } catch (error) {
+                console.error('Scan face error:', error);
+                updateFaceStatus('❌ Scanning error', 'error');
+                showError('Scanning error: ' + error.message);
+            } finally {
+                scanBtn.disabled = false;
+                scanBtn.innerHTML = '<span>🔍</span> Scan Face Once';
+            }
+        }
+
+        // Verify face with Gemini
+        async function verifyFaceWithGemini() {
+            console.log("🤖 Starting Gemini verification...");
+            
+            if (!scannedFaceData) {
+                showError('Please scan face first');
+                return;
+            }
+            
+            try {
+                verifyBtn.disabled = true;
+                verifyBtn.innerHTML = '<span>🔄</span> Verifying...';
+                updateSpoofingStatus('Verifying with Gemini AI...', 'scanning');
+
+                const response = await fetch('/api/face-register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        type: 'verify_face',
+                        image_data: scannedFaceData.image_data
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.verified) {
+                    updateSpoofingStatus('✅ ' + result.message, 'success');
+                    showMessage('🎉 ' + result.message, 'success');
+                    
+                    // Update scanned face data with verification results
+                    scannedFaceData.facial_patterns = result.facial_patterns;
+                    scannedFaceData.face_location = result.face_location;
+                    
+                    // Show registration form
+                    showRegistrationForm();
+                    verifySection.classList.add('hidden');
+                    
+                } else {
+                    updateSpoofingStatus('❌ Verification failed', 'error');
+                    showError(result.message);
+                }
+                
+            } catch (error) {
+                updateSpoofingStatus('❌ Verification error', 'error');
+                showError('Verification error: ' + error.message);
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<span>🤖</span> Verify with Gemini';
+            }
+        }
+
+        // Show registration form
+        function showRegistrationForm() {
+            employeeForm.classList.remove('hidden');
+            employeeForm.classList.add('fade-in');
+            
+            if (currentMapId) {
+                showMessage('✅ Face verified successfully! Your details are pre-filled. Click "Complete Registration" to finish.', 'success');
+            } else {
+                showMessage('✅ Face verified successfully! Please fill in your details to complete registration.', 'success');
+            }
+        }
+
+        // Update face overlay position
+        function updateFaceOverlay(faceLocation, type) {
+            const [x, y, w, h] = faceLocation;
+            
+            // Get video element dimensions
+            const videoRect = video.getBoundingClientRect();
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            
+            // Calculate scaling factors
+            const scaleX = videoRect.width / videoWidth;
+            const scaleY = videoRect.height / videoHeight;
+            
+            // Apply scaling and position overlay
+            faceOverlay.style.display = 'block';
+            faceOverlay.style.left = (x * scaleX) + 'px';
+            faceOverlay.style.top = (y * scaleY) + 'px';
+            faceOverlay.style.width = (w * scaleX) + 'px';
+            faceOverlay.style.height = (h * scaleY) + 'px';
+            
+            // Set color based on type
+            if (type === 'success') {
+                faceOverlay.style.borderColor = '#10b981';
+                faceOverlay.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                faceOverlay.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.3)';
+                faceOverlay.classList.remove('warning');
+            } else {
+                faceOverlay.style.borderColor = '#f59e0b';
+                faceOverlay.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+                faceOverlay.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.3)';
+                faceOverlay.classList.add('warning');
+            }
+        }
+
+        // Update camera status
+        function updateCameraStatus(message, type) {
+            updateStatusCard(cameraStatus, message, type, 'Camera Status');
+        }
+
+        // Update face status
+        function updateFaceStatus(message, type) {
+            updateStatusCard(faceStatus, message, type, 'Face Detection');
+        }
+
+        // Update spoofing status
+        function updateSpoofingStatus(message, type) {
+            updateStatusCard(spoofingStatus, message, type, 'Spoofing Check');
+        }
+
+        // Update status card
+        function updateStatusCard(card, message, type, title) {
+            const icon = card.querySelector('.status-icon');
+            const titleEl = card.querySelector('h3');
+            const messageEl = card.querySelector('p');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            // Update icon and styling
+            icon.className = 'status-icon';
+            if (type === 'scanning') {
+                icon.classList.add('scanning', 'pulse');
+                icon.innerHTML = '<span>🔍</span>';
+            } else if (type === 'success') {
+                icon.classList.add('success');
+                icon.innerHTML = '<span>✅</span>';
+            } else if (type === 'error') {
+                icon.classList.add('error');
+                icon.innerHTML = '<span>❌</span>';
+            } else if (type === 'warning') {
+                icon.classList.add('scanning');
+                icon.innerHTML = '<span>⚠️</span>';
+            } else if (type === 'stopped') {
+                icon.innerHTML = '<span>📷</span>';
+            } else {
+                icon.innerHTML = '<span>👤</span>';
+            }
+        }
+
+        // Form submission for final registration
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('employee_id').value.trim();
+            const employeeName = document.getElementById('employee_name').value.trim();
+            
+            if (!employeeId || !employeeName) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            if (!scannedFaceData || !scannedFaceData.facial_patterns) {
+                showError('No verified face data found. Please scan and verify your face first.');
+                return;
+            }
+            
+            try {
+                const submitBtn = document.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>🔄</span> Registering...';
+                
+                // Get map_id from URL if present
+                const urlParams = new URLSearchParams(window.location.search);
+                const mapId = urlParams.get('id');
+                
+                console.log(`📝 Submitting registration with Map ID: ${mapId}`);
+                
+                const response = await fetch('/api/face-register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        type: 'final_registration',
+                        employee_id: employeeId,
+                        employee_name: employeeName,
+                        facial_patterns: scannedFaceData.facial_patterns,
+                        map_id: mapId  // Include map_id in the request
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let successMessage = '🎉 ' + result.message;
+                    
+                    if (mapId) {
+                        successMessage += '<br><br>✅ External registration completed successfully!';
+                        // Notify parent window if in iframe
+                        if (window !== window.parent) {
+                            window.parent.postMessage({
+                                type: 'registration_completed',
+                                map_id: mapId,
+                                employee_id: employeeId,
+                                employee_name: employeeName,
+                                success: true
+                            }, '*');
+                        }
+                    }
+                    
+                    showMessage(successMessage, 'success');
+                    document.getElementById('registrationForm').reset();
+                    employeeForm.classList.add('hidden');
+                    scannedFaceData = null;
+                    
+                    // Reset everything for new registration
+                    stopCamera();
+                    
+                    // Show success message with redirection option
+                    setTimeout(() => {
+                        if (mapId) {
+                            showMessage('✅ External registration completed! You can close this window.', 'success');
+                        } else {
+                            showMessage('✅ Registration completed! You can now go to Mark Attendance page.', 'success');
+                        }
+                    }, 1000);
+                    
+                } else {
+                    showError(result.message);
+                }
+                
+            } catch (error) {
+                showError('Registration error: ' + error.message);
+            } finally {
+                const submitBtn = document.querySelector('button[type="submit"]');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>✅</span> Complete Registration';
+            }
+        });
+
+        // Utility functions
+        function showMessage(message, type) {
+            messageDiv.innerHTML = `<div class="message ${type === 'success' ? 'success-message' : 'error-message'} fade-in">${message}</div>`;
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (messageDiv.innerHTML.includes(message)) {
+                        messageDiv.innerHTML = '';
+                    }
+                }, 5000);
+            }
+        }
+
+        function showError(message) {
+            showMessage('❌ Error: ' + message, 'error');
+        }
+
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfToken ? csrfToken.value : '';
+        }
+
+        // Stop camera when leaving page
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</body>
+</html>
