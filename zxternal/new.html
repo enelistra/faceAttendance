@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Witchcraft Candle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #0a0a0a, #000000);
+        }
+
+        .scene {
+            perspective: 1000px;
+            perspective-origin: 50% 50%;
+        }
+
+        .candle-container {
+            transform-style: preserve-3d;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotateY(0deg); }
+            50% { transform: translateY(-10px) rotateY(5deg); }
+        }
+
+        .candle-body {
+            width: 80px;
+            height: 200px;
+            background: linear-gradient(to bottom, 
+                #8b0000 0%, 
+                #5a0000 30%, 
+                #3d0000 70%, 
+                #1a0000 100%);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            box-shadow: 
+                inset -5px 0 15px rgba(0,0,0,0.6),
+                inset 5px 0 15px rgba(139,0,0,0.4),
+                0 20px 50px rgba(0,0,0,0.8);
+            transform-style: preserve-3d;
+        }
+
+        .candle-body::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 0;
+            width: 80px;
+            height: 30px;
+            background: radial-gradient(ellipse at center, 
+                #a00000 0%, 
+                #6b0000 50%, 
+                #4a0000 100%);
+            border-radius: 50%;
+            transform: rotateX(60deg);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+        }
+
+        .melted-wax {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .drip {
+            position: absolute;
+            width: 8px;
+            background: linear-gradient(to bottom, #8b0000, #3d0000);
+            border-radius: 0 0 4px 4px;
+            animation: drip-fall 3s ease-in infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes drip-fall {
+            0% { height: 0; top: 0; }
+            50% { height: 40px; top: 0; }
+            100% { height: 40px; top: 40px; opacity: 0; }
+        }
+
+        .wick {
+            position: absolute;
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(to bottom, #1a1a1a 0%, #000 80%, #ff4500 100%);
+            top: -30px;
+            left: 38px;
+            border-radius: 2px;
+            z-index: 1;
+        }
+
+        .flame {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            background: radial-gradient(ellipse at center bottom, 
+                #ff4500 0%, 
+                #ff6a00 20%, 
+                #ffa500 40%, 
+                #ffff00 60%, 
+                transparent 80%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: -80px;
+            left: 20px;
+            animation: flicker 0.2s infinite alternate, sway 2s ease-in-out infinite;
+            filter: blur(2px);
+            box-shadow: 
+                0 0 20px #ff4500,
+                0 0 40px #ff6a00,
+                0 0 60px #ffa500,
+                0 -20px 80px rgba(255,69,0,0.5);
+        }
+
+        .flame::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background: radial-gradient(ellipse at center, 
+                #ffff00 0%, 
+                #ffa500 50%, 
+                transparent 70%);
+            border-radius: 50%;
+            top: 15px;
+            left: 10px;
+            filter: blur(1px);
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1, 1) translateY(0); opacity: 1; }
+            100% { transform: scale(1.05, 0.95) translateY(-2px); opacity: 0.95; }
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-2deg) translateX(-2px); }
+            50% { transform: rotate(2deg) translateX(2px); }
+        }
+
+        .glow {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, 
+                rgba(255,69,0,0.3) 0%, 
+                rgba(255,106,0,0.2) 30%, 
+                transparent 70%);
+            top: -150px;
+            left: -60px;
+            border-radius: 50%;
+            animation: pulse-glow 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ffa500;
+            border-radius: 50%;
+            animation: rise 3s linear infinite;
+            opacity: 0;
+            filter: blur(1px);
+        }
+
+        @keyframes rise {
+            0% { 
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+            20% { opacity: 0.8; }
+            100% { 
+                transform: translateY(-150px) translateX(var(--drift)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .pentagram {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+            filter: drop-shadow(0 0 20px #8b0000);
+            animation: rotate-pentagram 30s linear infinite, pulse-pentagram 3s ease-in-out infinite;
+        }
+
+        @keyframes rotate-pentagram {
+            from { transform: translateX(-50%) rotate(0deg); }
+            to { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        @keyframes pulse-pentagram {
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.3; }
+        }
+
+        .shadow {
+            position: absolute;
+            width: 120px;
+            height: 20px;
+            background: radial-gradient(ellipse at center, 
+                rgba(0,0,0,0.8) 0%, 
+                transparent 70%);
+            bottom: -20px;
+            left: -20px;
+            border-radius: 50%;
+            animation: shadow-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes shadow-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .fog {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(139,0,0,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 60%, rgba(75,0,130,0.1) 0%, transparent 50%);
+            animation: fog-move 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes fog-move {
+            0%, 100% { opacity: 0.3; transform: translateX(0); }
+            50% { opacity: 0.5; transform: translateX(20px); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    
+    <!-- Fog Effect -->
+    <div class="fog"></div>
+
+    <!-- Main Scene -->
+    <div class="scene relative">
+        <div class="candle-container relative">
+            
+            <!-- Pentagram Symbol -->
+            <svg class="pentagram" viewBox="0 0 100 100">
+                <path d="M50 10 L61 38 L90 38 L67 55 L77 83 L50 65 L23 83 L33 55 L10 38 L39 38 Z" 
+                      fill="none" stroke="#8b0000" stroke-width="1.5"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#8b0000" stroke-width="1.5"/>
+            </svg>
+
+            <!-- Candle -->
+            <div class="candle-body">
+                <!-- Melted Wax Drips -->
+                <div class="melted-wax">
+                    <div class="drip" style="left: 10px; animation-delay: 0s;"></div>
+                    <div class="drip" style="left: 25px; animation-delay: 1s;"></div>
+                    <div class="drip" style="left: 55px; animation-delay: 1.5s;"></div>
+                    <div class="drip" style="left: 65px; animation-delay: 0.5s;"></div>
+                </div>
+
+                <!-- Wick -->
+                <div class="wick"></div>
+
+                <!-- Flame -->
+                <div class="flame"></div>
+
+                <!-- Glow Effect -->
+                <div class="glow"></div>
+
+                <!-- Particles Container -->
+                <div id="particles"></div>
+            </div>
+
+            <!-- Shadow -->
+            <div class="shadow"></div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles/smoke
+        const particlesContainer = document.getElementById('particles');
+        
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            const randomX = Math.random() * 40 - 20;
+            const randomDelay = Math.random() * 2;
+            
+            particle.style.left = `${40 + randomX}px`;
+            particle.style.bottom = '200px';
+            particle.style.setProperty('--drift', `${randomX}px`);
+            particle.style.animationDelay = `${randomDelay}s`;
+            
+            particlesContainer.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 5000);
+        }
+
+        // Generate particles continuously
+        setInterval(createParticle, 200);
+
+        // Add flickering intensity variation
+        const flame = document.querySelector('.flame');
+        setInterval(() => {
+            const randomIntensity = 0.9 + Math.random() * 0.2;
+            flame.style.opacity = randomIntensity;
+        }, 100);
+
+        // Add spooky flickering to the entire scene
+        const body = document.body;
+        setInterval(() => {
+            if (Math.random() > 0.98) {
+                body.style.filter = 'brightness(0.7)';
+                setTimeout(() => {
+                    body.style.filter = 'brightness(1)';
+                }, 50);
+            }
+        }, 100);
+
+        // Create eerie sound effect simulation (visual feedback)
+        setInterval(() => {
+            if (Math.random() > 0.995) {
+                const glow = document.querySelector('.glow');
+                glow.style.background = 'radial-gradient(circle, rgba(139,0,0,0.4) 0%, rgba(255,106,0,0.3) 30%, transparent 70%)';
+                setTimeout(() => {
+                    glow.style.background = 'radial-gradient(circle, rgba(255,69,0,0.3) 0%, rgba(255,106,0,0.2) 30%, transparent 70%)';
+                }, 200);
+            }
+        }, 100);
+    </script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Witchcraft Candle - 3D Animation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=MedievalSharp&display=swap');
+        
+        body {
+            font-family: 'MedievalSharp', cursive;
+            background: #0a0a0a;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+        
+        .candle-container {
+            transform-style: preserve-3d;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .candle {
+            transform-style: preserve-3d;
+            transform: rotateX(10deg);
+        }
+        
+        .wax {
+            background: linear-gradient(to bottom, #f5e6d3, #e8c9a9, #d4a574);
+            box-shadow: 
+                inset 0 0 20px rgba(180, 120, 70, 0.7),
+                0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .flame {
+            background: radial-gradient(ellipse at center, 
+                rgba(255, 255, 200, 0.8) 0%, 
+                rgba(255, 200, 50, 0.6) 40%, 
+                rgba(255, 100, 0, 0.4) 70%, 
+                rgba(255, 50, 0, 0.2) 100%);
+            box-shadow: 
+                0 0 40px 15px rgba(255, 200, 50, 0.7),
+                0 0 80px 30px rgba(255, 100, 0, 0.4);
+            filter: blur(1px);
+            transform-origin: center bottom;
+            animation: flicker 0.2s ease-in-out infinite alternate;
+        }
+        
+        .flame-inner {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 20px 10px rgba(255, 255, 200, 0.8);
+            filter: blur(0.5px);
+        }
+        
+        .smoke {
+            background: rgba(50, 50, 50, 0.2);
+            border-radius: 50%;
+            filter: blur(10px);
+            animation: smoke 8s linear infinite;
+        }
+        
+        .glow {
+            background: radial-gradient(ellipse at center, 
+                rgba(255, 200, 50, 0.2) 0%, 
+                rgba(255, 100, 0, 0.1) 40%, 
+                transparent 70%);
+            filter: blur(10px);
+            animation: pulse 4s ease-in-out infinite alternate;
+        }
+        
+        .drip {
+            background: linear-gradient(to bottom, #d4a574, #b87d46);
+            border-radius: 50% 50% 0 0;
+            transform: rotateX(60deg);
+        }
+        
+        .shadow {
+            background: radial-gradient(ellipse at center, 
+                rgba(0, 0, 0, 0.5) 0%, 
+                transparent 70%);
+            filter: blur(10px);
+            animation: shadow-pulse 4s ease-in-out infinite alternate;
+        }
+        
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-1deg); }
+            100% { transform: scale(1.1) rotate(1deg); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotateY(0deg); }
+            50% { transform: translateY(-10px) rotateY(5deg); }
+        }
+        
+        @keyframes smoke {
+            0% { 
+                transform: translateY(0) scale(0.5); 
+                opacity: 0.5;
+            }
+            50% { 
+                transform: translateY(-100px) scale(1.2) translateX(10px); 
+                opacity: 0.3;
+            }
+            100% { 
+                transform: translateY(-200px) scale(1.5) translateX(-10px); 
+                opacity: 0;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: scale(0.9); }
+            100% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        @keyframes shadow-pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        .spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 200, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 5px 2px rgba(255, 200, 100, 0.8);
+            animation: spark 1.5s ease-out forwards;
+        }
+        
+        @keyframes spark {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        .floating-text {
+            animation: float-text 15s ease-in-out infinite;
+            text-shadow: 0 0 10px rgba(255, 50, 50, 0.7);
+        }
+        
+        @keyframes float-text {
+            0%, 100% { transform: translate(-50%, -50%) rotate(-3deg) scale(1); }
+            25% { transform: translate(-50%, -50%) rotate(2deg) scale(1.05); }
+            50% { transform: translate(-50%, -50%) rotate(-1deg) scale(1.02); }
+            75% { transform: translate(-50%, -50%) rotate(3deg) scale(1.07); }
+        }
+        
+        .pentagram {
+            background: 
+                radial-gradient(circle at center, transparent 60%, rgba(120, 0, 0, 0.3) 100%),
+                repeating-conic-gradient(
+                    from 0deg,
+                    rgba(120, 0, 0, 0.8) 0deg 10deg,
+                    transparent 10deg 20deg
+                );
+            animation: rotate-pentagram 60s linear infinite;
+        }
+        
+        @keyframes rotate-pentagram {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center bg-black text-amber-100">
+    <div class="absolute inset-0 pentagram w-full h-full opacity-30"></div>
+    
+    <div class="candle-container relative">
+        <!-- Candle shadow -->
+        <div class="shadow absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-32 h-10"></div>
+        
+        <!-- Candle -->
+        <div class="candle relative">
+            <!-- Candle wax -->
+            <div class="wax w-16 h-40 mx-auto rounded-t-lg rounded-b relative">
+                <!-- Wax drips -->
+                <div class="drip absolute w-4 h-6 -left-2 top-20"></div>
+                <div class="drip absolute w-3 h-5 -right-1 top-28"></div>
+                <div class="drip absolute w-5 h-7 left-4 top-32"></div>
+                
+                <!-- Wick -->
+                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-6 bg-gray-800 rounded-t"></div>
+                
+                <!-- Flame -->
+                <div class="flame absolute -top-4 left-1/2 transform -translate-x-1/2 w-6 h-12 rounded-full">
+                    <div class="flame-inner absolute top-1 left-1/2 transform -translate-x-1/2 w-2 h-4 rounded-full"></div>
+                </div>
+                
+                <!-- Glow around flame -->
+                <div class="glow absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 rounded-full"></div>
+            </div>
+        </div>
+        
+        <!-- Smoke particles -->
+        <div id="smoke-container" class="absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+        
+        <!-- Floating text -->
+        <div class="floating-text absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-xl md:text-2xl font-cinzel opacity-70">
+            Spirits Awaken in the Flame
+        </div>
+    </div>
+
+    <!-- Spark container -->
+    <div id="spark-container" class="absolute top-0 left-0 w-full h-full pointer-events-none"></div>
+
+    <script>
+        // Create smoke particles
+        function createSmoke() {
+            const smokeContainer = document.getElementById('smoke-container');
+            const smoke = document.createElement('div');
+            smoke.className = 'smoke absolute';
+            
+            // Random size and position
+            const size = Math.random() * 20 + 10;
+            const left = Math.random() * 20 - 10;
+            
+            smoke.style.width = `${size}px`;
+            smoke.style.height = `${size}px`;
+            smoke.style.left = `${left}px`;
+            
+            smokeContainer.appendChild(smoke);
+            
+            // Remove smoke after animation completes
+            setTimeout(() => {
+                smoke.remove();
+            }, 8000);
+        }
+        
+        // Create sparks
+        function createSpark() {
+            const sparkContainer = document.getElementById('spark-container');
+            const spark = document.createElement('div');
+            spark.className = 'spark';
+            
+            // Random position near the flame
+            const left = 50 + (Math.random() * 20 - 10);
+            const top = -10 + (Math.random() * 10 - 5);
+            
+            spark.style.left = `${left}%`;
+            spark.style.top = `${top}%`;
+            
+            sparkContainer.appendChild(spark);
+            
+            // Remove spark after animation completes
+            setTimeout(() => {
+                spark.remove();
+            }, 1500);
+        }
+        
+        // Create initial smoke
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                createSmoke();
+            }, i * 1000);
+        }
+        
+        // Create continuous smoke
+        setInterval(createSmoke, 2000);
+        
+        // Create occasional sparks
+        setInterval(createSpark, 500);
+        
+        // Add spooky sound on click
+        document.body.addEventListener('click', function() {
+            const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+            // This is a silent audio - in a real implementation you would use a spooky sound file
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log("Audio play failed:", e));
+            
+            // Create extra sparks on click
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createSpark, i * 100);
+            }
+        });
+        
+        // Add mouse move effect for candle flicker
+        document.addEventListener('mousemove', function(e) {
+            const candle = document.querySelector('.candle');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            // Subtle rotation based on mouse position
+            candle.style.transform = `rotateX(${10 + y * 5}deg) rotateY(${x * 10 - 5}deg)`;
+        });
+    </script>
+</body>
+</html>
